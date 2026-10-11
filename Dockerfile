@@ -9,8 +9,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py endpoints.py messages_consumer.py openapi.yaml utils.py ./
+COPY config ./config
+COPY worker ./worker
+COPY consumers ./consumers
+COPY producers ./producers
 
 EXPOSE 6066
 
-CMD ["faust", "-A", "app", "worker", "-l", "info"]
+CMD ["faust", "-A", "worker.app", "worker", "-l", "info"]

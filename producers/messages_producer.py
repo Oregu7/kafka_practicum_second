@@ -1,16 +1,14 @@
 import argparse
 import json
-import os
 import sys
 
 from confluent_kafka import Producer
 
-BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP", "127.0.0.1:9092,127.0.0.1:9095,127.0.0.1:9096")
-TOPIC = "messages"
+from config.settings import MESSAGES_TOPIC, PRODUCER_CONFIG
 
 
 def main():
-    parser = argparse.ArgumentParser(description=f"Отправить сообщение в топик {TOPIC}")
+    parser = argparse.ArgumentParser(description=f"Отправить сообщение в топик {MESSAGES_TOPIC}")
     parser.add_argument("sender_id", nargs="?", help="от кого (без аргументов спросит сам)")
     parser.add_argument("recipient_id", nargs="?", help="кому; он же ключ сообщения")
     parser.add_argument("text", nargs="?", help="текст сообщения")
@@ -24,9 +22,9 @@ def main():
         sys.exit("\nотменено")
 
     delivered = []
-    producer = Producer({"bootstrap.servers": BOOTSTRAP})
+    producer = Producer(PRODUCER_CONFIG)
     producer.produce(
-        TOPIC,
+        MESSAGES_TOPIC,
         key=args.recipient_id.encode(),
         value=json.dumps(vars(args), ensure_ascii=False).encode(),
         on_delivery=lambda err, msg: delivered.append(err or msg),
@@ -36,7 +34,7 @@ def main():
     result = delivered[0]
     if not hasattr(result, "partition"):
         sys.exit(f"не удалось отправить сообщение: {result}")
-    print(f"отправлено: {TOPIC} partition={result.partition()} offset={result.offset()}")
+    print(f"отправлено: {MESSAGES_TOPIC} partition={result.partition()} offset={result.offset()}")
 
 
 if __name__ == "__main__":

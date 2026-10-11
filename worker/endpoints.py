@@ -4,8 +4,9 @@ import yaml
 from aiohttp_swagger import setup_swagger
 from faust.web import View
 
-from app import BlockCommand, Message, app, blocked_users_table, commands_topic, messages_topic, stop_words_table
-from utils import normalize_word
+from worker.app import app, blocked_users_table, commands_topic, messages_topic, stop_words_table
+from worker.models import BlockCommand, Message
+from worker.utils import normalize_word
 
 # ---------------------------------------------------------------------------
 # Swagger

@@ -22,7 +22,7 @@ python seeds/load.py
 
 ## Swagger
 
-`http://127.0.0.1:6066/docs` — описание и пробные запросы к эндпоинтам. Спецификация лежит в `openapi.yaml`,
+`http://127.0.0.1:6066/docs` — описание и пробные запросы к эндпоинтам. Спецификация лежит в `worker/openapi.yaml`,
 при изменении эндпоинтов обновляйте её вручную.
 
 ## Отправка сообщений
@@ -30,8 +30,8 @@ python seeds/load.py
 Консольной командой (нужен `confluent-kafka`: `pip install -r requirements.txt`):
 
 ```bash
-python messages_producer.py carol bob "привет"
-python messages_producer.py                      # без аргументов спросит сам
+python -m producers.messages_producer carol bob "привет"
+python -m producers.messages_producer            # без аргументов спросит сам
 ```
 
 Или через ручку:
@@ -46,18 +46,21 @@ curl -X POST http://127.0.0.1:6066/messages/ -H "Content-Type: application/json"
 
 ## Классы и файлы
 
-- `app.py` — приложение, топики, таблицы и агенты.
-- `endpoints.py` — HTTP-эндпоинты и подключение Swagger.
-- `openapi.yaml` — OpenAPI-спецификация.
-- `utils.py` — цензура и нормализация слова.
-- `messages_producer.py` — консольная команда, отправляет сообщение в `messages`.
-- `messages_consumer.py` — читает `filtered_messages` и пишет сообщения в лог.
-- `docker-compose.yml`, `Dockerfile` — брокеры, воркер, консьюмер (тот же образ, другая команда), Kafka UI.
+- `config/settings.py` — настройки: брокеры (`KAFKA_BOOTSTRAP`), имена топиков, число партиций, конфиги продьюсера и консьюмера.
+- `worker/app.py` — Faust-приложение, топики и таблицы.
+- `worker/models.py` — модели `Message` и `BlockCommand`.
+- `worker/agents.py` — агенты: обработка блокировок и фильтрация сообщений.
+- `worker/endpoints.py` — HTTP-эндпоинты и подключение Swagger.
+- `worker/openapi.yaml` — OpenAPI-спецификация.
+- `worker/utils.py` — цензура и нормализация слова.
+- `producers/messages_producer.py` — консольная команда, отправляет сообщение в `messages`.
+- `consumers/messages_consumer.py` — читает `filtered_messages` и пишет сообщения в лог.
 - `seeds/` — тестовые стоп-слова и блокировки.
+- `docker-compose.yml`, `Dockerfile` — брокеры, воркер, консьюмер (тот же образ, другая команда), Kafka UI.
 
 ## Как это работает
 
-Топики: `messages`, `blocked_users`, `filtered_messages`. Число партиций задаёт `PARTITIONS` (3) в `app.py`.
+Топики: `messages`, `blocked_users`, `filtered_messages`. Число партиций задаёт `PARTITIONS` (3) в `config/settings.py`.
 
 | Таблица | Содержимое | Заполняется |
 |---|---|---|
@@ -88,21 +91,21 @@ curl -X POST http://127.0.0.1:6066/messages/ -H "Content-Type: application/json"
 
 ```bash
 curl -X POST http://127.0.0.1:6066/blocked-users/bob/ -H "Content-Type: application/json" -d '{"target_id": "alice"}'
-python messages_producer.py alice bob "hi"          # отброшено
+python -m producers.messages_producer alice bob "hi"          # отброшено
 curl -X POST http://127.0.0.1:6066/stop-words/spam/
-python messages_producer.py carol bob "это spam"    # в логе: "это ****"
+python -m producers.messages_producer carol bob "это spam"    # в логе: "это ****"
 docker compose logs -f messages_consumer
 curl -X DELETE http://127.0.0.1:6066/stop-words/spam/
 ```
 
 ## Воркер локально (Windows)
 
-Брокеры в Docker, воркер на хосте (без `KAFKA_BROKER` берутся `127.0.0.1:9092/9095/9096`). Контейнер `app` не запускайте — он занимает порт 6066:
+Брокеры в Docker, воркер на хосте (без `KAFKA_BOOTSTRAP` берутся `127.0.0.1:9092/9095/9096`). Контейнер `app` не запускайте — он занимает порт 6066:
 
 ```bash
 docker compose up -d kafka-0 kafka-1 kafka-2
 set PYTHONUTF8=1
-.venv\Scripts\python -m faust -A app worker -l info
+.venv\Scripts\python -m faust -A worker.app worker -l info
 ```
 
 Если при первом старте воркер не получил партиции — перезапустите его. Если топики создавались с другим числом

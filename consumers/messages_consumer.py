@@ -1,15 +1,9 @@
 import json
 import logging
-import os
 
 from confluent_kafka import Consumer, KafkaException
 
-CONSUMER_CONFIG = {
-    "bootstrap.servers": os.getenv("KAFKA_BOOTSTRAP", "127.0.0.1:9092,127.0.0.1:9095,127.0.0.1:9096"),
-    "group.id": "messages-consumer",
-    "auto.offset.reset": "earliest",
-}
-TOPIC = "filtered_messages"
+from config.settings import CONSUMER_CONFIG, FILTERED_TOPIC
 
 log = logging.getLogger("MessagesConsumer")
 
@@ -22,7 +16,7 @@ def format_message(msg):
 
 def main():
     consumer = Consumer(CONSUMER_CONFIG)
-    consumer.subscribe([TOPIC])
+    consumer.subscribe([FILTERED_TOPIC])
     try:
         while True:
             try:
