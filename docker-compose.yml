@@ -65,6 +65,15 @@ services:
       - KAFKA_BROKER=kafka://kafka-0:9092;kafka://kafka-1:9092;kafka://kafka-2:9092
     restart: on-failure
 
+  messages_consumer:
+    build: .
+    command: ["python", "messages_consumer.py"]
+    depends_on:
+      - app
+    environment:
+      - KAFKA_BOOTSTRAP=kafka-0:9092,kafka-1:9092,kafka-2:9092
+    restart: on-failure
+
   kafka-ui:
     image: provectuslabs/kafka-ui
     depends_on:

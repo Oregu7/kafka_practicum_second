@@ -9,7 +9,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py endpoints.py openapi.yaml utils.py ./
+COPY app.py endpoints.py messages_consumer.py openapi.yaml utils.py ./
 
 EXPOSE 6066
 
