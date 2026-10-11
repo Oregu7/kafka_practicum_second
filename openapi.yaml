@@ -1,0 +1,63 @@
+openapi: 3.0.3
+info:
+  title: Message filter API
+  version: 1.0.0
+  description: HTTP воркера Faust - блок-листы пользователей и стоп-слова.
+
+paths:
+  /blocked-users/{user_id}/:
+    get:
+      tags: [blocked-users]
+      summary: Список заблокированных пользователем
+      parameters:
+        - {name: user_id, in: path, required: true, description: Кто блокирует, schema: {type: string}}
+      responses:
+        "200":
+          description: Заблокированные пользователи (пустой список, если никого нет)
+          content:
+            application/json:
+              example: {blocked: [alice]}
+
+  /blocked-users/{user_id}/{target_id}/:
+    post:
+      tags: [blocked-users]
+      summary: Заблокировать пользователя
+      description: Команда уходит в топик blocked_users и применяется асинхронно, в списке появится через мгновение.
+      parameters:
+        - {name: user_id, in: path, required: true, description: Кто блокирует, schema: {type: string}}
+        - {name: target_id, in: path, required: true, description: Кого блокирует, schema: {type: string}}
+      responses:
+        "202":
+          description: Команда принята
+          content:
+            application/json:
+              example: {user_id: bob, target_id: alice}
+
+  /stop-words/:
+    get:
+      tags: [stop-words]
+      summary: Список стоп-слов
+      responses:
+        "200": {$ref: "#/components/responses/WordList"}
+
+  /stop-words/{word}/:
+    parameters:
+      - {name: word, in: path, required: true, description: Слово (в нижний регистр, без пробелов по краям), schema: {type: string}}
+    post:
+      tags: [stop-words]
+      summary: Добавить стоп-слово
+      responses:
+        "200": {$ref: "#/components/responses/WordList"}
+    delete:
+      tags: [stop-words]
+      summary: Убрать стоп-слово
+      responses:
+        "200": {$ref: "#/components/responses/WordList"}
+
+components:
+  responses:
+    WordList:
+      description: Актуальный список стоп-слов
+      content:
+        application/json:
+          example: [плохо, спам]
