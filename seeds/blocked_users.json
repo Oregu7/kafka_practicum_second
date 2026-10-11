@@ -1,0 +1,31 @@
+{
+  "bob": [
+    "alice",
+    "mallory",
+    "trudy"
+  ],
+  "carol": [
+    "mallory",
+    "spammer",
+    "eve"
+  ],
+  "dave": [
+    "spammer",
+    "trudy",
+    "oscar"
+  ],
+  "erin": [
+    "alice",
+    "peggy",
+    "victor"
+  ],
+  "frank": [
+    "victor",
+    "mallory",
+    "wendy"
+  ],
+  "grace": [
+    "sybil",
+    "eve"
+  ]
+}
