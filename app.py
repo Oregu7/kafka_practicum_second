@@ -28,6 +28,7 @@ app = faust.App(
     topic_partitions=PARTITIONS,
     topic_replication_factor=3,
     autodiscover=["endpoints"],
+    store="rocksdb://",
 )
 
 messages_topic = app.topic("messages", key_type=str, value_type=Message)

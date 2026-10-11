@@ -14,6 +14,12 @@ TOPIC = "filtered_messages"
 log = logging.getLogger("MessagesConsumer")
 
 
+def format_message(msg):
+    data = json.loads(msg.value())
+    return (f"{data['sender_id']} → {data['recipient_id']}: {data['text']}"
+            f"   [{msg.topic()} p{msg.partition()}@{msg.offset()}]")
+
+
 def main():
     consumer = Consumer(CONSUMER_CONFIG)
     consumer.subscribe([TOPIC])
@@ -27,8 +33,8 @@ def main():
                     log.error("Kafka error: %s", msg.error())
                     continue
                 try:
-                    log.info("Received: recipient=%s message=%s", msg.key().decode(), json.loads(msg.value()))
-                except (ValueError, AttributeError) as exc:
+                    log.info(format_message(msg))
+                except (ValueError, KeyError, TypeError) as exc:
                     log.error("Deserialization failed: %s", exc)
             except KafkaException as exc:
                 log.error("Consumer error: %s", exc)
@@ -39,5 +45,5 @@ def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-5s %(message)s", datefmt="%H:%M:%S")
     main()

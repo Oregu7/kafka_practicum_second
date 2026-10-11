@@ -12,8 +12,10 @@ SEEDS = Path(__file__).parent
 URL = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:6066").rstrip("/")
 
 
-def post(path):
-    req = urllib.request.Request(URL + path, method="POST")
+def post(path, payload=None):
+    data = json.dumps(payload).encode() if payload is not None else None
+    req = urllib.request.Request(URL + path, data=data, method="POST",
+                                 headers={"Content-Type": "application/json"})
     urllib.request.urlopen(req, timeout=10).read()
 
 
@@ -30,5 +32,5 @@ print(f"стоп-слов: {len(stop_words)}")
 
 blocks = [(user, target) for user, targets in load("blocked_users.json").items() for target in targets]
 for user_id, target_id in blocks:
-    post(f"/blocked-users/{quote(user_id)}/{quote(target_id)}/")
+    post(f"/blocked-users/{quote(user_id)}/", {"target_id": target_id})
 print(f"блокировок: {len(blocks)} (применяются агентом асинхронно)")

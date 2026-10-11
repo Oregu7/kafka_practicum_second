@@ -2,36 +2,77 @@ openapi: 3.0.3
 info:
   title: Message filter API
   version: 1.0.0
-  description: HTTP воркера Faust - блок-листы пользователей и стоп-слова.
+  description: HTTP воркера Faust - отправка сообщений, блок-листы пользователей и стоп-слова.
 
 paths:
+  /messages/:
+    post:
+      tags: [messages]
+      summary: Отправить сообщение
+      description: >
+        Сообщение уходит в топик messages (ключ - recipient_id) и обрабатывается асинхронно:
+        отбрасывается, если отправитель заблокирован получателем, иначе цензурируется и попадает в filtered_messages.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sender_id, recipient_id, text]
+              properties:
+                sender_id: {type: string, description: От кого}
+                recipient_id: {type: string, description: Кому}
+                text: {type: string, description: Текст сообщения}
+            example: {sender_id: alice, recipient_id: bob, text: привет}
+      responses:
+        "202":
+          description: Сообщение принято
+          content:
+            application/json:
+              example: {sender_id: alice, recipient_id: bob, text: привет}
+        "400":
+          description: Тело запроса - не JSON или нет одного из полей, или поле не строка / пустое
+          content:
+            application/json:
+              example: {error: "ожидается JSON {sender_id, recipient_id, text}, все поля - непустые строки"}
+
   /blocked-users/{user_id}/:
+    parameters:
+      - {name: user_id, in: path, required: true, description: Кто блокирует, schema: {type: string}}
     get:
       tags: [blocked-users]
       summary: Список заблокированных пользователем
-      parameters:
-        - {name: user_id, in: path, required: true, description: Кто блокирует, schema: {type: string}}
       responses:
         "200":
           description: Заблокированные пользователи (пустой список, если никого нет)
           content:
             application/json:
               example: {blocked: [alice]}
-
-  /blocked-users/{user_id}/{target_id}/:
     post:
       tags: [blocked-users]
       summary: Заблокировать пользователя
       description: Команда уходит в топик blocked_users и применяется асинхронно, в списке появится через мгновение.
-      parameters:
-        - {name: user_id, in: path, required: true, description: Кто блокирует, schema: {type: string}}
-        - {name: target_id, in: path, required: true, description: Кого блокирует, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_id]
+              properties:
+                target_id: {type: string, description: Кого блокирует}
+            example: {target_id: alice}
       responses:
         "202":
           description: Команда принята
           content:
             application/json:
               example: {user_id: bob, target_id: alice}
+        "400":
+          description: Тело запроса - не JSON, нет target_id, или он не строка / пустой
+          content:
+            application/json:
+              example: {error: "ожидается JSON {target_id}, значение - непустая строка"}
 
   /stop-words/:
     get:
