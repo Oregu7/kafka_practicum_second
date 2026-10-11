@@ -87,16 +87,23 @@ paths:
     post:
       tags: [stop-words]
       summary: Добавить стоп-слово
+      description: Команда уходит в топик stop_words и применяется асинхронно, в списке появится через мгновение.
       responses:
-        "200": {$ref: "#/components/responses/WordList"}
+        "202": {$ref: "#/components/responses/WordCommand"}
     delete:
       tags: [stop-words]
       summary: Убрать стоп-слово
+      description: Команда уходит в топик stop_words и применяется асинхронно, из списка исчезнет через мгновение.
       responses:
-        "200": {$ref: "#/components/responses/WordList"}
+        "202": {$ref: "#/components/responses/WordCommand"}
 
 components:
   responses:
+    WordCommand:
+      description: Команда принята (слово в нижнем регистре)
+      content:
+        application/json:
+          example: {word: спам, action: add}
     WordList:
       description: Актуальный список стоп-слов
       content:

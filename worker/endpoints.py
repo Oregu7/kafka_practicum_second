@@ -4,8 +4,8 @@ import yaml
 from aiohttp_swagger import setup_swagger
 from faust.web import View
 
-from worker.app import app, blocked_users_table, commands_topic, messages_topic, stop_words_table
-from worker.models import BlockCommand, Message
+from worker.app import app, blocked_users_table, blocked_users_topic, messages_topic, stop_words_table, stop_words_topic
+from worker.models import BlockCommand, Message, StopWordCommand
 from worker.utils import normalize_word
 
 # ---------------------------------------------------------------------------
@@ -41,7 +41,7 @@ class BlockedUsers(View):
         if not isinstance(target_id, str) or not target_id:
             return self.json({"error": "ожидается JSON {target_id}, значение - непустая строка"}, status=400)
         command = BlockCommand(user_id=user_id, target_id=target_id)
-        await commands_topic.send(key=user_id, value=command)
+        await blocked_users_topic.send(key=user_id, value=command)
         return self.json({"user_id": user_id, "target_id": target_id}, status=202)
 
 
@@ -69,9 +69,12 @@ async def get_stop_words(web, request):
 @app.page("/stop-words/{word}/")
 class StopWord(View):
     async def post(self, request, word):
-        stop_words_table[normalize_word(word)] = True
-        return self.json(sorted(stop_words_table.keys()))
+        return await self._send(word, "add")
 
     async def delete(self, request, word):
-        stop_words_table.pop(normalize_word(word), None)
-        return self.json(sorted(stop_words_table.keys()))
+        return await self._send(word, "remove")
+
+    async def _send(self, word, action):
+        word = normalize_word(word)
+        await stop_words_topic.send(key=word, value=StopWordCommand(word=word, action=action))
+        return self.json({"word": word, "action": action}, status=202)

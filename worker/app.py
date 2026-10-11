@@ -7,8 +7,9 @@ from config.settings import (
     MESSAGES_TOPIC,
     PARTITIONS,
     REPLICATION_FACTOR,
+    STOP_WORDS_TOPIC,
 )
-from worker.models import BlockCommand, Message
+from worker.models import BlockCommand, Message, StopWordCommand
 
 app = faust.App(
     "message-filter-app",
@@ -19,9 +20,10 @@ app = faust.App(
     store="rocksdb://",
 )
 
-messages_topic = app.topic(MESSAGES_TOPIC, key_type=str, value_type=Message)
-commands_topic = app.topic(BLOCKED_USERS_TOPIC, key_type=str, value_type=BlockCommand)
-filtered_topic = app.topic(FILTERED_TOPIC, key_type=str, value_type=Message)
+messages_topic = app.topic(MESSAGES_TOPIC, key_type=str, value_type=Message, internal=True)
+blocked_users_topic = app.topic(BLOCKED_USERS_TOPIC, key_type=str, value_type=BlockCommand, internal=True)
+filtered_topic = app.topic(FILTERED_TOPIC, key_type=str, value_type=Message, internal=True)
+stop_words_topic = app.topic(STOP_WORDS_TOPIC, key_type=str, value_type=StopWordCommand, internal=True)
 
 blocked_users_table = app.Table(
     "blocked_users",

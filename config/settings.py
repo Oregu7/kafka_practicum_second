@@ -6,6 +6,7 @@ KAFKA_BROKER = ";".join(f"kafka://{addr}" for addr in KAFKA_BOOTSTRAP.split(",")
 
 MESSAGES_TOPIC = "messages"
 BLOCKED_USERS_TOPIC = "blocked_users"
+STOP_WORDS_TOPIC = "stop_words"
 FILTERED_TOPIC = "filtered_messages"
 
 PARTITIONS = 3
